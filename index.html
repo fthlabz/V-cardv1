@@ -19,7 +19,10 @@
             --btn-height: 60px;
         }
 
+        /* SCROLLBAR GİZLEME (TÜM TARAYICILAR İÇİN) */
         ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
 
         html, body {
@@ -27,9 +30,9 @@
             background-color: var(--bg-body);
             color: var(--text-primary);
             font-family: 'Outfit', sans-serif;
-            min-height: 100vh;
+            height: 100vh; /* Tam ekran sabitleme */
             width: 100%;
-            overflow-x: hidden;
+            overflow: hidden; /* Ana gövde kaymasını engelle */
             display: flex; justify-content: center;
             background-image: radial-gradient(circle at 50% 0%, #1e1e1e 0%, #000000 70%);
         }
@@ -47,9 +50,12 @@
 
         .wrapper {
             width: 100%; max-width: 420px;
+            height: 100%; /* Yükseklik sınırla */
             padding: 40px 24px;
             display: flex; flex-direction: column; align-items: center;
-            overflow-y: auto; padding-bottom: 120px;
+            overflow-y: auto; /* Sadece içi aksın */
+            overflow-x: hidden; /* Sağa sola kaymayı engelle */
+            padding-bottom: 120px;
         }
 
         .profile-area { text-align: center; margin-bottom: 35px; width: 100%; }
@@ -79,7 +85,8 @@
             background: var(--bg-surface);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 18px;
-            display: flex; align-items: center; padding: 0 22px;
+            display: none; /* Varsayılan GİZLİ, Veri varsa JS ile açılır */
+            align-items: center; padding: 0 22px;
             color: var(--text-primary); text-decoration: none;
             cursor: pointer;
             transition: transform 0.1s;
@@ -93,6 +100,7 @@
             background: linear-gradient(135deg, #D4AF37, #C5A028);
             border: none; color: #000; justify-content: center;
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+            display: flex; /* Bu her zaman görünür (rehbere kaydet) */
         }
         .btn-gold i { color: #000; }
         .btn-gold span { font-weight: 800; font-size: 18px; }
@@ -107,7 +115,8 @@
             color: var(--gold); font-size: 11px; letter-spacing: 2px; font-weight: 800;
             margin-top: 30px; margin-bottom: 10px; width: 100%; text-align: center;
             opacity: 0.7; text-transform: uppercase; 
-            display: flex; align-items: center; justify-content: center;
+            display: none; /* Varsayılan gizli */
+            align-items: center; justify-content: center;
         }
         .section-title::before, .section-title::after {
             content: ""; height: 1px; background: #333; flex: 1; margin: 0 15px;
@@ -157,6 +166,18 @@
             border-radius: 14px; color: #000; font-weight: 800; font-size: 18px; 
             margin-top: 20px; cursor: pointer; 
         }
+
+        #successScreen {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; height: 100%; margin-top: 50px;
+        }
+        .success-icon {
+            font-size: 80px; color: var(--gold); margin-bottom: 30px;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { 0%{transform: scale(0);} 100%{transform: scale(1);} }
+        .success-title { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 15px; }
+        .success-desc { color: #aaa; font-size: 16px; line-height: 1.6; max-width: 300px; margin-bottom: 40px; }
     </style>
 </head>
 <body>
@@ -190,40 +211,40 @@
             <a id="btnMap" href="#" target="_blank" class="btn"><i class="fas fa-location-dot"></i> <span>Konum / Adres</span></a>
 
             <div id="companySection" style="display:none; width:100%; flex-direction:column; gap:14px;">
-                <div class="section-title">KURUMSAL</div>
+                <div class="section-title" id="secTitleCorp">KURUMSAL</div>
                 
-                <button id="btnTax" class="btn" onclick="copyTaxInfo()" style="display:none;">
+                <button id="btnTax" class="btn" onclick="copyTaxInfo()">
                     <i class="fas fa-file-invoice"></i> <span>Fatura Bilgilerini Kopyala</span>
                 </button>
 
-                <a id="btnCatalog" href="#" target="_blank" class="btn" style="display:none;">
+                <a id="btnCatalog" href="#" target="_blank" class="btn">
                     <i class="fas fa-book-open"></i> <span>Katalog / Menü</span>
                 </a>
 
-                <a id="btnReview" href="#" target="_blank" class="btn" style="display:none;">
+                <a id="btnReview" href="#" target="_blank" class="btn">
                     <i class="fas fa-star"></i> <span>Bizi Değerlendirin</span>
                 </a>
 
-                <a id="btnPay" href="#" target="_blank" class="btn" style="display:none;">
+                <a id="btnPay" href="#" target="_blank" class="btn">
                     <i class="fas fa-wallet"></i> <span>Alternatif Ödeme</span>
                 </a>
 
-                <a id="btnBook" href="#" target="_blank" class="btn" style="display:none;">
+                <a id="btnBook" href="#" target="_blank" class="btn">
                     <i class="fas fa-calendar-check"></i> <span>Randevu Al</span>
                 </a>
             </div>
 
             <div id="footerSection" style="display:none; width:100%; flex-direction:column; gap:14px;">
-                <div class="section-title">DİĞER</div>
+                <div class="section-title" id="secTitleOther">DİĞER</div>
                 
-                <button class="btn" onclick="shareCard()">
+                <button class="btn" onclick="shareCard()" style="display:flex !important;">
                     <i class="fas fa-share-alt"></i> <span>V-card Paylaş</span>
                 </button>
 
-                <button class="btn btn-iban" onclick="copyText(cardData.iban, 'IBAN Kopyalandı!')">
+                <button id="btnIbanCopy" class="btn btn-iban" onclick="copyText(cardData.iban, 'IBAN Kopyalandı!')">
                     <i class="fas fa-credit-card"></i> <span>IBAN Kopyala</span>
                 </button>
-                <button class="btn btn-iban" onclick="copyText(cardData.ibanName, 'Alıcı Adı Kopyalandı!')">
+                <button id="btnIbanNameCopy" class="btn btn-iban" onclick="copyText(cardData.ibanName, 'Alıcı Adı Kopyalandı!')">
                     <i class="fas fa-user-tag"></i> <span id="lblIbanName">Alıcı Adını Kopyala</span>
                 </button>
             </div>
@@ -239,7 +260,7 @@
     </div>
 
     <div id="setupPanel">
-        <div class="setup-content">
+        <div class="setup-content" id="formContent">
             <h2 class="setup-title">KART AYARLARI</h2>
             
             <div class="input-group"><span class="label">Ad Soyad</span><input type="text" id="inName" class="input"></div>
@@ -275,19 +296,30 @@
             <button onclick="saveToGithub()" class="save-btn">KAYDET VE YAYINLA</button>
             <button onclick="document.getElementById('setupPanel').style.display='none'" style="width:100%; background:none; border:none; color:#666; padding:15px; margin-top:10px; font-size:16px; font-weight:600;">Vazgeç</button>
         </div>
+
+        <div id="successScreen">
+            <i class="fas fa-check-circle success-icon"></i>
+            <div class="success-title">Bilgileriniz Kaydedildi!</div>
+            <div class="success-desc">
+                Güncelleme işlemi başarıyla başlatıldı.<br><br>
+                Dünya genelindeki sunucuların güncellenmesi 1-2 dakika sürebilir. Bu süreden sonra kartınız yeni bilgilerle açılacaktır.
+            </div>
+            <button onclick="location.reload()" class="btn btn-gold" style="width:200px;">
+                <span>TAMAM</span>
+            </button>
+        </div>
     </div>
 
     <script>
         // ================================================================
         // AYARLAR (BURAYI KENDİ BİLGİLERİNLE DOLDUR)
         // ================================================================
-        const GITHUB_USERNAME = "fthlabz";   // GitHub kullanıcı adın
-        const GITHUB_REPO = "V-cardv1";      // Repo adın
-        const GITHUB_FILENAME = "data.json"; // Dosya adın
+        const GITHUB_USERNAME = "fthlabz";
+        const GITHUB_REPO = "V-cardv1";
+        const GITHUB_FILENAME = "data.json";
 
-        // TOKEN AYARI (GÜVENLİK İÇİN 2 PARÇA)
         const TOKEN_BASI   = "ghp_";
-        const TOKEN_DEVAMI = "VKnhQ1DRON25B6xSSu7faZ68cFvjg32Y4Fu3"; // ghp_ kısmını almadan kalanı buraya yapıştır
+        const TOKEN_DEVAMI = "BURAYA_TOKENIN_GERI_KALANINI_YAPISTIR"; // Sadece tokenin ghp_ sonrası kısmı
         const GITHUB_TOKEN = TOKEN_BASI + TOKEN_DEVAMI;
         // ================================================================
 
@@ -317,12 +349,10 @@
                 document.getElementById('loader').style.display = 'none';
 
                 if (!userData) {
-                    // Veri yoksa kurulum ekranını aç
                     openSetup();
                 } else {
                     document.getElementById('cardView').style.display = 'flex';
                     
-                    // Eski yapıya uygun parse işlemi
                     let cleanTitle = (userData.title || "").replace(/¬=/g, "").replace(/¬/g, "").trim();
                     let rawFolder = (userData.folder || "").replace(/¬=/g, "").replace(/¬/g, "");
                     const parts = rawFolder.split("|||");
@@ -358,8 +388,10 @@
 
             } catch (e) {
                 console.error(e);
-                alert("Veri çekilemedi. Ayarları kontrol et.");
                 document.getElementById('loader').style.display = 'none';
+                if(confirm("Veri çekilemedi. Ayarlar menüsüne gitmek ister misiniz?")) {
+                    openSetup();
+                }
             }
         }
 
@@ -383,18 +415,12 @@
                 document.getElementById('vInitials').style.display = 'flex';
             }
 
-            // IBAN Gösterimi
-            if(cardData.iban && cardData.iban.length > 5) {
-                document.getElementById('footerSection').style.display = 'flex';
-                if(cardData.ibanName) document.getElementById('lblIbanName').innerText = "Alıcı: " + cardData.ibanName;
-            } else {
-                document.getElementById('footerSection').style.display = 'none';
-            }
-
-            // Butonları Göster/Gizle
+            // --- TEK TEK KONTROL EDEREK GÖSTERME/GİZLEME ---
+            
+            // Telefon & WhatsApp
             showBtn('btnCall', cardData.phone, `tel:${normalizeTel(cardData.phone)}`);
             if(cardData.phone) document.getElementById('lblCall').innerText = cardData.phone;
-
+            
             showBtn('btnWa', cardData.whats, `https://wa.me/${normalizeTel(cardData.whats)}`);
             showBtn('btnEmail', cardData.email, `mailto:${cardData.email}`);
             
@@ -404,16 +430,48 @@
             showBtn('btnWeb', cardData.web, ensureHttp(cardData.web));
             showBtn('btnMap', cardData.map, ensureHttp(cardData.map));
 
-            const hasCompany = cardData.compName || cardData.catalog || cardData.review || cardData.pay || cardData.book;
-            if(hasCompany) {
+            // Kurumsal Bölümü
+            const hasCompanyData = cardData.compName || cardData.catalog || cardData.review || cardData.pay || cardData.book;
+            
+            if(hasCompanyData) {
                 document.getElementById('companySection').style.display = 'flex';
-                if(cardData.compName) document.getElementById('btnTax').style.display = 'flex';
+                document.getElementById('secTitleCorp').style.display = 'flex';
+                
+                // Kurumsal butonları tek tek kontrol et
+                const btnTax = document.getElementById('btnTax');
+                if(cardData.compName && cardData.compName.length > 1) {
+                    btnTax.style.display = 'flex';
+                } else {
+                    btnTax.style.display = 'none';
+                }
+
                 showBtn('btnCatalog', cardData.catalog, ensureHttp(cardData.catalog));
                 showBtn('btnReview', cardData.review, ensureHttp(cardData.review));
                 showBtn('btnPay', cardData.pay, ensureHttp(cardData.pay));
                 showBtn('btnBook', cardData.book, ensureHttp(cardData.book));
             } else {
                 document.getElementById('companySection').style.display = 'none';
+            }
+
+            // IBAN Gösterimi
+            if(cardData.iban && cardData.iban.length > 5) {
+                document.getElementById('footerSection').style.display = 'flex';
+                document.getElementById('secTitleOther').style.display = 'flex';
+                
+                document.getElementById('btnIbanCopy').style.display = 'flex';
+                if(cardData.ibanName) {
+                    document.getElementById('btnIbanNameCopy').style.display = 'flex';
+                    document.getElementById('lblIbanName').innerText = "Alıcı: " + cardData.ibanName;
+                } else {
+                    document.getElementById('btnIbanNameCopy').style.display = 'none';
+                }
+            } else {
+                // IBAN yoksa, sadece paylaş butonu için section açık kalsın mı?
+                // Genelde "Diğer" başlığı altında sadece paylaş kalması garip olabilir ama kalsın.
+                document.getElementById('footerSection').style.display = 'flex';
+                document.getElementById('secTitleOther').style.display = 'flex';
+                document.getElementById('btnIbanCopy').style.display = 'none';
+                document.getElementById('btnIbanNameCopy').style.display = 'none';
             }
 
             document.getElementById("qrcode").innerHTML = "";
@@ -433,7 +491,6 @@
             btn.innerText = "KAYDEDİLİYOR...";
             btn.disabled = true;
 
-            // Eski veri yapısını koruyoruz
             const folderStr = [
                 encodeSafe(val('inWeb')),      // 0
                 encodeSafe(val('inEmail')),    // 1
@@ -465,7 +522,6 @@
             const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILENAME}`;
 
             try {
-                // 1. Mevcut dosyayı ve SHA hash'ini çek
                 const getRes = await fetch(apiUrl, {
                     headers: { 
                         'Authorization': `token ${GITHUB_TOKEN}`,
@@ -479,16 +535,12 @@
                 if (getRes.ok) {
                     const fileData = await getRes.json();
                     sha = fileData.sha;
-                    // Base64 decode (UTF-8 destekli)
                     const decodedContent = decodeURIComponent(escape(window.atob(fileData.content)));
                     currentContent = JSON.parse(decodedContent);
                 }
 
-                // 2. Veriyi güncelle
                 currentContent[currentID] = newData;
 
-                // 3. Dosyayı GitHub'a geri yükle (PUT)
-                // UTF-8 Base64 encode
                 const contentEncoded = window.btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2))));
 
                 const putRes = await fetch(apiUrl, {
@@ -500,14 +552,14 @@
                     body: JSON.stringify({
                         message: `Update user ${currentID}`,
                         content: contentEncoded,
-                        sha: sha // Dosya varsa SHA gerekli
+                        sha: sha
                     })
                 });
 
                 if (putRes.ok) {
                     localStorage.setItem('admin_' + currentID, "1");
-                    alert("Kayıt Başarılı! (GitHub CDN gecikmesi nedeniyle güncelleme 1-2 dk sürebilir)");
-                    location.reload();
+                    document.getElementById('formContent').style.display = 'none';
+                    document.getElementById('successScreen').style.display = 'flex';
                 } else {
                     const err = await putRes.json();
                     alert("Hata: " + err.message);
@@ -524,6 +576,9 @@
 
         function openSetup() {
             document.getElementById('setupPanel').style.display = 'flex';
+            document.getElementById('formContent').style.display = 'block';
+            document.getElementById('successScreen').style.display = 'none';
+
             valSet('inName', cardData.name);
             valSet('inTitle', cardData.title);
             valSet('inPhone', cardData.phone);
@@ -612,7 +667,16 @@
         function decodeSafe(s) { try { return decodeURIComponent(s); } catch(e){ return s; } }
         function normalizeTel(t) { return (t||"").replace(/[^\d]/g,'').replace(/^0/,'90'); }
         function ensureHttp(url) { if (!url) return ""; if (!/^https?:\/\//i.test(url)) return 'https://' + url; return url; }
-        function showBtn(id, val, href) { const el = document.getElementById(id); if (val && val.length > 2) { el.style.display = 'flex'; el.href = href; } else { el.style.display = 'none'; } }
+        // Düzeltilmiş showBtn Fonksiyonu: Boşsa GİZLE
+        function showBtn(id, val, href) { 
+            const el = document.getElementById(id); 
+            if (val && val.trim().length > 1) { 
+                el.style.display = 'flex'; 
+                el.href = href; 
+            } else { 
+                el.style.display = 'none'; 
+            } 
+        }
     </script>
 </body>
 </html>
