@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Digital Business Card</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #050505;
+            --bg-surface: #141414;
+            --gold: #D4AF37;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --btn-height: 60px;
+        }
+
+        ::-webkit-scrollbar { display: none; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+
+        html, body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden;
+            display: flex; justify-content: center;
+            background-image: radial-gradient(circle at 50% 0%, #1e1e1e 0%, #000000 70%);
+        }
+
+        #loader {
+            position: fixed; inset: 0; background: #000; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 3px solid #333;
+            border-top: 3px solid var(--gold); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .wrapper {
+            width: 100%; max-width: 420px;
+            padding: 40px 24px;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-y: auto; padding-bottom: 120px;
+        }
+
+        .profile-area { text-align: center; margin-bottom: 35px; width: 100%; }
+        
+        .avatar-box {
+            width: 120px; height: 120px; margin: 0 auto 20px;
+            border-radius: 50%; padding: 4px;
+            background: linear-gradient(135deg, var(--gold), #8a6e18);
+            box-shadow: 0 0 35px rgba(212, 175, 55, 0.5);
+            overflow: hidden;
+        }
+        .avatar { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background: #222; }
+        .avatar-fallback {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 100%; background: #222; color: var(--gold);
+            font-size: 45px; font-weight: 800; border-radius: 50%;
+        }
+
+        .name { font-size: 30px; font-weight: 800; margin: 0; text-align: center; letter-spacing: -0.5px; }
+        .title { font-size: 15px; color: var(--gold); margin-top: 8px; text-transform: uppercase; letter-spacing: 2px; text-align: center; font-weight: 600; }
+
+        .btn-group { width: 100%; display: flex; flex-direction: column; gap: 14px; }
+
+        /* BUTONLAR */
+        .btn {
+            width: 100%; height: var(--btn-height);
+            background: var(--bg-surface);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            display: flex; align-items: center; padding: 0 22px;
+            color: var(--text-primary); text-decoration: none;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); background: #222; }
+        
+        .btn i { font-size: 22px; width: 30px; text-align: center; color: #bbb; margin-right: 15px; }
+        .btn span { font-size: 17px; font-weight: 600; letter-spacing: 0.3px; }
+
+        .btn-gold {
+            background: linear-gradient(135deg, #D4AF37, #C5A028);
+            border: none; color: #000; justify-content: center;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
+        }
+        .btn-gold i { color: #000; }
+        .btn-gold span { font-weight: 800; font-size: 18px; }
+
+        .btn-iban {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        .btn-iban i { color: var(--gold); }
+
+        .section-title {
+            color: var(--gold); font-size: 11px; letter-spacing: 2px; font-weight: 800;
+            margin-top: 30px; margin-bottom: 10px; width: 100%; text-align: center;
+            opacity: 0.7; text-transform: uppercase; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .section-title::before, .section-title::after {
+            content: ""; height: 1px; background: #333; flex: 1; margin: 0 15px;
+        }
+
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: var(--gold); color: #000;
+            text-align: center; border-radius: 50px; padding: 16px; position: fixed; z-index: 10000;
+            left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: 800; font-size: 15px;
+            opacity: 0; transition: 0.3s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        .bottom-area {
+            margin-top: 40px; width: 100%;
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+        .qr-frame { padding: 15px; background: #fff; border-radius: 16px; }
+        .edit-trigger {
+            font-size: 14px; color: #666; cursor: pointer; font-weight: 600;
+            display: none; align-items: center; gap: 6px;
+            padding: 10px 20px; border-radius: 20px; background: #111;
+        }
+        .branding { font-size: 11px; color: #444; letter-spacing: 3px; text-transform: uppercase; margin-top: 10px; font-weight: 700; }
+
+        /* ADMIN PANELİ */
+        #setupPanel {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100;
+            padding: 40px 24px; display: none;
+            flex-direction: column; align-items: center; justify-content: flex-start;
+            overflow-y: auto;
+        }
+        .setup-content { width: 100%; max-width: 420px; padding-bottom: 80px; }
+        .setup-title { color: var(--gold); font-size: 24px; margin-bottom: 30px; text-align: center; font-weight: 800; }
+        
+        .input-group { margin-bottom: 22px; width: 100%; }
+        .label { display: block; font-size: 14px; color: #aaa; margin-bottom: 8px; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; }
+        .input { 
+            width: 100%; height: 58px; background: #111; 
+            border: 1px solid #333; border-radius: 14px; padding: 0 18px; 
+            color: #fff; font-size: 17px; font-weight: 500; font-family: 'Outfit', sans-serif;
+        }
+        .input:focus { border-color: var(--gold); outline: none; }
+        
+        .save-btn { 
+            width: 100%; height: 60px; background: var(--gold); border: none; 
+            border-radius: 14px; color: #000; font-weight: 800; font-size: 18px; 
+            margin-top: 20px; cursor: pointer; 
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader"><div class="spinner"></div></div>
+    <div id="toast"><i class="fas fa-check-circle"></i> Kopyalandı!</div>
+
+    <div class="wrapper" id="cardView" style="display:none;">
+        <div class="profile-area">
+            <div class="avatar-box">
+                <img id="vImg" class="avatar" src="" onerror="this.style.display='none'; document.getElementById('vInitials').style.display='flex';">
+                <div id="vInitials" class="avatar-fallback" style="display:none;"></div>
+            </div>
+            <h1 id="vName" class="name"></h1>
+            <div id="vTitle" class="title"></div>
+        </div>
+
+        <div class="btn-group">
+            <button onclick="downloadVCard()" class="btn btn-gold">
+                <i class="fas fa-user-plus"></i>
+                <span>Rehbere Kaydet</span>
+            </button>
+
+            <a id="btnCall" href="#" class="btn"><i class="fas fa-phone"></i> <span id="lblCall">...</span></a>
+            <a id="btnWa" href="#" target="_blank" class="btn"><i class="fab fa-whatsapp"></i> <span>WhatsApp</span></a>
+            <a id="btnEmail" href="#" class="btn"><i class="fas fa-envelope"></i> <span>E-Posta</span></a>
+            <a id="btnInsta" href="#" target="_blank" class="btn"><i class="fab fa-instagram"></i> <span>Instagram</span></a>
+            <a id="btnLinkedin" href="#" target="_blank" class="btn"><i class="fab fa-linkedin-in"></i> <span>LinkedIn</span></a>
+            <a id="btnFacebook" href="#" target="_blank" class="btn"><i class="fab fa-facebook-f"></i> <span>Facebook</span></a>
+            <a id="btnWeb" href="#" target="_blank" class="btn"><i class="fas fa-globe"></i> <span>Web Sitesi</span></a>
+            <a id="btnMap" href="#" target="_blank" class="btn"><i class="fas fa-location-dot"></i> <span>Konum / Adres</span></a>
+
+            <div id="companySection" style="display:none; width:100%; flex-direction:column; gap:14px;">
+                <div class="section-title">KURUMSAL</div>
+                
+                <button id="btnTax" class="btn" onclick="copyTaxInfo()" style="display:none;">
+                    <i class="fas fa-file-invoice"></i> <span>Fatura Bilgilerini Kopyala</span>
+                </button>
+
+                <a id="btnCatalog" href="#" target="_blank" class="btn" style="display:none;">
+                    <i class="fas fa-book-open"></i> <span>Katalog / Menü</span>
+                </a>
+
+                <a id="btnReview" href="#" target="_blank" class="btn" style="display:none;">
+                    <i class="fas fa-star"></i> <span>Bizi Değerlendirin</span>
+                </a>
+
+                <a id="btnPay" href="#" target="_blank" class="btn" style="display:none;">
+                    <i class="fas fa-wallet"></i> <span>Alternatif Ödeme</span>
+                </a>
+
+                <a id="btnBook" href="#" target="_blank" class="btn" style="display:none;">
+                    <i class="fas fa-calendar-check"></i> <span>Randevu Al</span>
+                </a>
+            </div>
+
+            <div id="footerSection" style="display:none; width:100%; flex-direction:column; gap:14px;">
+                <div class="section-title">DİĞER</div>
+                
+                <button class="btn" onclick="shareCard()">
+                    <i class="fas fa-share-alt"></i> <span>V-card Paylaş</span>
+                </button>
+
+                <button class="btn btn-iban" onclick="copyText(cardData.iban, 'IBAN Kopyalandı!')">
+                    <i class="fas fa-credit-card"></i> <span>IBAN Kopyala</span>
+                </button>
+                <button class="btn btn-iban" onclick="copyText(cardData.ibanName, 'Alıcı Adı Kopyalandı!')">
+                    <i class="fas fa-user-tag"></i> <span id="lblIbanName">Alıcı Adını Kopyala</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="bottom-area">
+            <div class="qr-frame"><div id="qrcode"></div></div>
+            <div id="adminEdit" class="edit-trigger" onclick="openSetup()">
+                <i class="fas fa-pen"></i> 
+            </div>
+            <div class="branding">POWERED BY FTHLABZ®</div>
+        </div>
+    </div>
+
+    <div id="setupPanel">
+        <div class="setup-content">
+            <h2 class="setup-title">KART AYARLARI</h2>
+            
+            <div class="input-group"><span class="label">Ad Soyad</span><input type="text" id="inName" class="input"></div>
+            <div class="input-group"><span class="label">Kısa Ünvan</span><input type="text" id="inTitle" class="input"></div>
+            <div class="input-group"><span class="label">Telefon</span><input type="tel" id="inPhone" class="input"></div>
+            <div class="input-group"><span class="label">WhatsApp</span><input type="tel" id="inWhats" class="input"></div>
+            <div class="input-group"><span class="label">E-Posta</span><input type="email" id="inEmail" class="input"></div>
+            <div class="input-group"><span class="label">Web Sitesi</span><input type="text" id="inWeb" class="input"></div>
+            <div class="input-group"><span class="label">Resim Linki</span><input type="text" id="inImg" class="input"></div>
+
+            <div style="border-top:1px solid #333; margin:25px 0;"></div>
+            <p style="color:var(--gold); text-align:center; font-size:13px; font-weight:700; letter-spacing:1px;">KURUMSAL BİLGİLER</p>
+            
+            <div class="input-group"><span class="label">Şirket Resmi Adı</span><input type="text" id="inCompName" class="input"></div>
+            <div class="input-group"><span class="label">Vergi Dairesi</span><input type="text" id="inTaxOffice" class="input"></div>
+            <div class="input-group"><span class="label">Vergi Numarası</span><input type="text" id="inTaxNo" class="input"></div>
+            
+            <div class="input-group"><span class="label">Katalog / Menü Linki</span><input type="text" id="inCatalog" class="input"></div>
+            <div class="input-group"><span class="label">Google Yorum Linki</span><input type="text" id="inReview" class="input"></div>
+            <div class="input-group"><span class="label">Ödeme Linki</span><input type="text" id="inPay" class="input"></div>
+            <div class="input-group"><span class="label">Randevu Linki</span><input type="text" id="inBook" class="input"></div>
+
+            <div style="border-top:1px solid #333; margin:25px 0;"></div>
+            <p style="color:var(--gold); text-align:center; font-size:13px; font-weight:700; letter-spacing:1px;">BANKA & SOSYAL</p>
+            
+            <div class="input-group"><span class="label">IBAN</span><input type="text" id="inIban" class="input"></div>
+            <div class="input-group"><span class="label">IBAN Alıcı Adı</span><input type="text" id="inIbanName" class="input"></div>
+            <div class="input-group"><span class="label">Instagram</span><input type="text" id="inInsta" class="input"></div>
+            <div class="input-group"><span class="label">LinkedIn</span><input type="text" id="inLinkedin" class="input"></div>
+            <div class="input-group"><span class="label">Facebook</span><input type="text" id="inFacebook" class="input"></div>
+            <div class="input-group"><span class="label">Harita Linki</span><input type="text" id="inMap" class="input"></div>
+
+            <button onclick="saveToGithub()" class="save-btn">KAYDET VE YAYINLA</button>
+            <button onclick="document.getElementById('setupPanel').style.display='none'" style="width:100%; background:none; border:none; color:#666; padding:15px; margin-top:10px; font-size:16px; font-weight:600;">Vazgeç</button>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        // AYARLAR (BURAYI KENDİ BİLGİLERİNLE DOLDUR)
+        // ================================================================
+        const GITHUB_USERNAME = "fthlabz"; // GitHub kullanıcı adın
+        const GITHUB_REPO = "V-cardv1";          // Repo adın (örn: vcard-data)
+        const GITHUB_FILENAME = "data.json";      // Dosya adın (örn: data.json)
+        const GITHUB_TOKEN = "ghp_TOKEN_BURAYA";  // GitHub'dan aldığın token
+        // ================================================================
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentID = urlParams.get('id');
+        let cardData = {};
+
+        window.onload = function() {
+            if (!currentID) {
+                alert("Linkte ID bulunamadı. Lütfen url sonuna ?id=seninadın ekle");
+                document.getElementById('loader').style.display = 'none';
+                return;
+            }
+            loadFromGithub();
+        };
+
+        async function loadFromGithub() {
+            const fileUrl = `https://raw.githubusercontent.com/${GITHUB_USERNAME}/${GITHUB_REPO}/main/${GITHUB_FILENAME}?t=${new Date().getTime()}`;
+            
+            try {
+                const response = await fetch(fileUrl);
+                if (!response.ok) throw new Error("Dosya bulunamadı");
+                
+                const allData = await response.json();
+                const userData = allData[currentID];
+
+                document.getElementById('loader').style.display = 'none';
+
+                if (!userData) {
+                    // Veri yoksa kurulum ekranını aç
+                    openSetup();
+                } else {
+                    document.getElementById('cardView').style.display = 'flex';
+                    
+                    // Eski yapıya uygun parse işlemi
+                    let cleanTitle = (userData.title || "").replace(/¬=/g, "").replace(/¬/g, "").trim();
+                    let rawFolder = (userData.folder || "").replace(/¬=/g, "").replace(/¬/g, "");
+                    const parts = rawFolder.split("|||");
+                    
+                    cardData = {
+                        name: cleanTitle,
+                        web: decodeSafe(parts[0]),
+                        email: decodeSafe(parts[1]),
+                        iban: decodeSafe(parts[2]), 
+                        title: decodeSafe(parts[3]),
+                        phone: decodeSafe(parts[4]),
+                        whats: decodeSafe(parts[5]),
+                        insta: decodeSafe(parts[6]),
+                        linkedin: decodeSafe(parts[7]),
+                        map: decodeSafe(parts[8]),
+                        img: decodeSafe(parts[9]),
+                        facebook: decodeSafe(parts[10]),
+                        ibanName: decodeSafe(parts[11]),
+                        compName: decodeSafe(parts[12]),
+                        taxOffice: decodeSafe(parts[13]),
+                        taxNo: decodeSafe(parts[14]),
+                        catalog: decodeSafe(parts[15]),
+                        review: decodeSafe(parts[16]),
+                        pay: decodeSafe(parts[17]),
+                        book: decodeSafe(parts[18])
+                    };
+                    renderView();
+                    
+                    if (localStorage.getItem('admin_' + currentID) === "1") {
+                        document.getElementById('adminEdit').style.display = 'flex';
+                    }
+                }
+
+            } catch (e) {
+                console.error(e);
+                alert("Veri çekilemedi. Ayarları kontrol et.");
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        function renderView() {
+            document.getElementById('vName').innerText = cardData.name || "İsimsiz";
+            document.getElementById('vTitle').innerText = cardData.title || "";
+            
+            const initials = (cardData.name || "U").split(" ").map(n=>n[0]).join("").substring(0,2).toUpperCase();
+            document.getElementById('vInitials').innerText = initials;
+
+            const imgEl = document.getElementById('vImg');
+            if (cardData.img && cardData.img.length > 5) {
+                imgEl.style.display = 'block'; 
+                document.getElementById('vInitials').style.display = 'none';
+                if(cardData.img.includes("drive.google.com")) {
+                    const idMatch = cardData.img.match(/[-\w]{25,}/);
+                    if(idMatch) imgEl.src = "https://lh3.googleusercontent.com/d/" + idMatch[0] + "=s500";
+                } else { imgEl.src = cardData.img; }
+            } else {
+                imgEl.style.display = 'none';
+                document.getElementById('vInitials').style.display = 'flex';
+            }
+
+            // IBAN Gösterimi
+            if(cardData.iban && cardData.iban.length > 5) {
+                document.getElementById('footerSection').style.display = 'flex';
+                if(cardData.ibanName) document.getElementById('lblIbanName').innerText = "Alıcı: " + cardData.ibanName;
+            } else {
+                document.getElementById('footerSection').style.display = 'none';
+            }
+
+            // Butonları Göster/Gizle
+            showBtn('btnCall', cardData.phone, `tel:${normalizeTel(cardData.phone)}`);
+            if(cardData.phone) document.getElementById('lblCall').innerText = cardData.phone;
+
+            showBtn('btnWa', cardData.whats, `https://wa.me/${normalizeTel(cardData.whats)}`);
+            showBtn('btnEmail', cardData.email, `mailto:${cardData.email}`);
+            
+            showBtn('btnInsta', cardData.insta, ensureHttp(cardData.insta));
+            showBtn('btnLinkedin', cardData.linkedin, ensureHttp(cardData.linkedin));
+            showBtn('btnFacebook', cardData.facebook, ensureHttp(cardData.facebook));
+            showBtn('btnWeb', cardData.web, ensureHttp(cardData.web));
+            showBtn('btnMap', cardData.map, ensureHttp(cardData.map));
+
+            const hasCompany = cardData.compName || cardData.catalog || cardData.review || cardData.pay || cardData.book;
+            if(hasCompany) {
+                document.getElementById('companySection').style.display = 'flex';
+                if(cardData.compName) document.getElementById('btnTax').style.display = 'flex';
+                showBtn('btnCatalog', cardData.catalog, ensureHttp(cardData.catalog));
+                showBtn('btnReview', cardData.review, ensureHttp(cardData.review));
+                showBtn('btnPay', cardData.pay, ensureHttp(cardData.pay));
+                showBtn('btnBook', cardData.book, ensureHttp(cardData.book));
+            } else {
+                document.getElementById('companySection').style.display = 'none';
+            }
+
+            document.getElementById("qrcode").innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), {
+                text: window.location.href,
+                width: 100, height: 100,
+                colorDark : "#000000", colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.M
+            });
+        }
+
+        async function saveToGithub() {
+            const name = val('inName');
+            if(!name) return alert("İsim zorunludur.");
+
+            const btn = document.querySelector('.save-btn');
+            btn.innerText = "KAYDEDİLİYOR...";
+            btn.disabled = true;
+
+            // Eski veri yapısını koruyoruz
+            const folderStr = [
+                encodeSafe(val('inWeb')),      // 0
+                encodeSafe(val('inEmail')),    // 1
+                encodeSafe(val('inIban')),     // 2
+                encodeSafe(val('inTitle')),    // 3
+                encodeSafe(val('inPhone')),    // 4
+                encodeSafe(val('inWhats')),    // 5
+                encodeSafe(val('inInsta')),    // 6
+                encodeSafe(val('inLinkedin')), // 7
+                encodeSafe(val('inMap')),      // 8
+                encodeSafe(val('inImg')),      // 9
+                encodeSafe(val('inFacebook')), // 10
+                encodeSafe(val('inIbanName')), // 11
+                encodeSafe(val('inCompName')), // 12
+                encodeSafe(val('inTaxOffice')),// 13
+                encodeSafe(val('inTaxNo')),    // 14
+                encodeSafe(val('inCatalog')),  // 15
+                encodeSafe(val('inReview')),   // 16
+                encodeSafe(val('inPay')),      // 17
+                encodeSafe(val('inBook'))      // 18
+            ].join("|||");
+
+            const newData = {
+                title: name,
+                folder: folderStr,
+                updatedAt: new Date().toISOString()
+            };
+
+            const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILENAME}`;
+
+            try {
+                // 1. Mevcut dosyayı ve SHA hash'ini çek
+                const getRes = await fetch(apiUrl, {
+                    headers: { 
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+                
+                let currentContent = {};
+                let sha = null;
+
+                if (getRes.ok) {
+                    const fileData = await getRes.json();
+                    sha = fileData.sha;
+                    // Base64 decode (UTF-8 destekli)
+                    const decodedContent = decodeURIComponent(escape(window.atob(fileData.content)));
+                    currentContent = JSON.parse(decodedContent);
+                }
+
+                // 2. Veriyi güncelle
+                currentContent[currentID] = newData;
+
+                // 3. Dosyayı GitHub'a geri yükle (PUT)
+                // UTF-8 Base64 encode
+                const contentEncoded = window.btoa(unescape(encodeURIComponent(JSON.stringify(currentContent, null, 2))));
+
+                const putRes = await fetch(apiUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: `Update user ${currentID}`,
+                        content: contentEncoded,
+                        sha: sha // Dosya varsa SHA gerekli
+                    })
+                });
+
+                if (putRes.ok) {
+                    localStorage.setItem('admin_' + currentID, "1");
+                    alert("Kayıt Başarılı! (GitHub CDN gecikmesi nedeniyle güncelleme 1-2 dk sürebilir)");
+                    location.reload();
+                } else {
+                    const err = await putRes.json();
+                    alert("Hata: " + err.message);
+                    btn.disabled = false;
+                    btn.innerText = "KAYDET VE YAYINLA";
+                }
+
+            } catch (e) {
+                alert("Bağlantı hatası: " + e);
+                btn.disabled = false;
+                btn.innerText = "KAYDET VE YAYINLA";
+            }
+        }
+
+        function openSetup() {
+            document.getElementById('setupPanel').style.display = 'flex';
+            valSet('inName', cardData.name);
+            valSet('inTitle', cardData.title);
+            valSet('inPhone', cardData.phone);
+            valSet('inWhats', cardData.whats);
+            valSet('inEmail', cardData.email);
+            valSet('inWeb', cardData.web);
+            valSet('inImg', cardData.img);
+            valSet('inIban', cardData.iban);
+            valSet('inIbanName', cardData.ibanName);
+            valSet('inInsta', cardData.insta);
+            valSet('inLinkedin', cardData.linkedin);
+            valSet('inFacebook', cardData.facebook);
+            valSet('inMap', cardData.map);
+            valSet('inCompName', cardData.compName);
+            valSet('inTaxOffice', cardData.taxOffice);
+            valSet('inTaxNo', cardData.taxNo);
+            valSet('inCatalog', cardData.catalog);
+            valSet('inReview', cardData.review);
+            valSet('inPay', cardData.pay);
+            valSet('inBook', cardData.book);
+        }
+
+        function copyTaxInfo() {
+            const info = `FATURA BİLGİLERİ:\nUnvan: ${cardData.compName}\nVD: ${cardData.taxOffice}\nNo: ${cardData.taxNo}\nAdres: ${cardData.map}`;
+            copyText(info, 'Fatura Bilgileri Kopyalandı!');
+        }
+
+        function shareCard() {
+            let cleanUrl = window.location.href.split('#')[0]; 
+            if (navigator.share) {
+                navigator.share({
+                    title: cardData.name,
+                    text: cardData.title,
+                    url: cleanUrl
+                }).catch(console.error);
+            } else {
+                copyText(cleanUrl, 'Link Kopyalandı!');
+            }
+        }
+
+        function copyText(text, msg) {
+            if(!text) return;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => showToast(msg));
+            } else {
+                const ta = document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; document.body.appendChild(ta); ta.focus(); ta.select(); try{document.execCommand('copy'); showToast(msg);}catch(e){} document.body.removeChild(ta);
+            }
+        }
+        
+        function showToast(msg) {
+            var x = document.getElementById("toast"); x.innerHTML=`<i class="fas fa-check-circle"></i> ${msg}`; x.className="show"; setTimeout(()=>x.className=x.className.replace("show",""),3000);
+        }
+
+        function downloadVCard() {
+            if(!cardData.name) return;
+            const parts = cardData.name.trim().split(" ");
+            const fn = parts.slice(0, -1).join(" ") || parts[0];
+            const ln = parts.length > 1 ? parts[parts.length-1] : "";
+            
+            let notes = "";
+            if(cardData.iban) notes += `IBAN: ${cardData.iban}\n`;
+            if(cardData.taxNo) notes += `Vergi No: ${cardData.taxNo} (${cardData.taxOffice})\n`;
+            
+            const vcard = [
+                "BEGIN:VCARD", "VERSION:3.0", "CHARSET:UTF-8",
+                `N;CHARSET=UTF-8:${ln};${fn};;;`,
+                `FN;CHARSET=UTF-8:${cardData.name}`,
+                `ORG;CHARSET=UTF-8:${cardData.title || ""}`,
+                `TEL;TYPE=CELL:${cardData.phone || ""}`,
+                `TEL;TYPE=WORK:${cardData.whats || ""}`,
+                `EMAIL;TYPE=WORK:${cardData.email || ""}`,
+                `URL;TYPE=WORK:${ensureHttp(cardData.web || window.location.href)}`,
+                `ADR;TYPE=WORK;CHARSET=UTF-8:;;${cardData.map || ""};;;;`,
+                cardData.insta ? `X-SOCIALPROFILE;TYPE=instagram:${ensureHttp(cardData.insta)}` : "",
+                `NOTE;CHARSET=UTF-8:${notes}`,
+                "END:VCARD"
+            ].join("\r\n");
+            
+            const blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+            const link = document.createElement('a'); link.href=URL.createObjectURL(blob); link.download=(cardData.name).replace(/ /g,"_")+".vcf"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        function val(id) { return document.getElementById(id).value; }
+        function valSet(id, v) { document.getElementById(id).value = v || ""; }
+        function encodeSafe(s) { return encodeURIComponent((s || "").trim()); }
+        function decodeSafe(s) { try { return decodeURIComponent(s); } catch(e){ return s; } }
+        function normalizeTel(t) { return (t||"").replace(/[^\d]/g,'').replace(/^0/,'90'); }
+        function ensureHttp(url) { if (!url) return ""; if (!/^https?:\/\//i.test(url)) return 'https://' + url; return url; }
+        function showBtn(id, val, href) { const el = document.getElementById(id); if (val && val.length > 2) { el.style.display = 'flex'; el.href = href; } else { el.style.display = 'none'; } }
+    </script>
+</body>
+</html>
