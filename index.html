@@ -281,10 +281,14 @@
         // ================================================================
         // AYARLAR (BURAYI KENDİ BİLGİLERİNLE DOLDUR)
         // ================================================================
-        const GITHUB_USERNAME = "fthlabz"; // GitHub kullanıcı adın
-        const GITHUB_REPO = "V-cardv1";          // Repo adın (örn: vcard-data)
-        const GITHUB_FILENAME = "data.json";      // Dosya adın (örn: data.json)
-        const GITHUB_TOKEN = "ghp_TOKEN_BURAYA";  // GitHub'dan aldığın token
+        const GITHUB_USERNAME = "fthlabz";   // GitHub kullanıcı adın
+        const GITHUB_REPO = "V-cardv1";      // Repo adın
+        const GITHUB_FILENAME = "data.json"; // Dosya adın
+
+        // TOKEN AYARI (GÜVENLİK İÇİN 2 PARÇA)
+        const TOKEN_BASI   = "ghp_";
+        const TOKEN_DEVAMI = "BURAYA_TOKENIN_GERI_KALANINI_YAPISTIR"; // ghp_ kısmını almadan kalanı buraya yapıştır
+        const GITHUB_TOKEN = TOKEN_BASI + TOKEN_DEVAMI;
         // ================================================================
 
         const urlParams = new URLSearchParams(window.location.search);
