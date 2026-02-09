@@ -19,7 +19,7 @@
             --btn-height: 60px;
         }
 
-        /* SCROLLBAR GİZLEME (TÜM TARAYICILAR İÇİN) */
+        /* SCROLLBAR GİZLEME */
         ::-webkit-scrollbar { display: none; }
         * { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -30,9 +30,9 @@
             background-color: var(--bg-body);
             color: var(--text-primary);
             font-family: 'Outfit', sans-serif;
-            height: 100vh; /* Tam ekran sabitleme */
+            height: 100vh;
             width: 100%;
-            overflow: hidden; /* Ana gövde kaymasını engelle */
+            overflow: hidden;
             display: flex; justify-content: center;
             background-image: radial-gradient(circle at 50% 0%, #1e1e1e 0%, #000000 70%);
         }
@@ -50,11 +50,11 @@
 
         .wrapper {
             width: 100%; max-width: 420px;
-            height: 100%; /* Yükseklik sınırla */
+            height: 100%;
             padding: 40px 24px;
             display: flex; flex-direction: column; align-items: center;
-            overflow-y: auto; /* Sadece içi aksın */
-            overflow-x: hidden; /* Sağa sola kaymayı engelle */
+            overflow-y: auto;
+            overflow-x: hidden;
             padding-bottom: 120px;
         }
 
@@ -79,13 +79,12 @@
 
         .btn-group { width: 100%; display: flex; flex-direction: column; gap: 14px; }
 
-        /* BUTONLAR */
         .btn {
             width: 100%; height: var(--btn-height);
             background: var(--bg-surface);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 18px;
-            display: none; /* Varsayılan GİZLİ, Veri varsa JS ile açılır */
+            display: none;
             align-items: center; padding: 0 22px;
             color: var(--text-primary); text-decoration: none;
             cursor: pointer;
@@ -100,7 +99,7 @@
             background: linear-gradient(135deg, #D4AF37, #C5A028);
             border: none; color: #000; justify-content: center;
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3);
-            display: flex; /* Bu her zaman görünür (rehbere kaydet) */
+            display: flex;
         }
         .btn-gold i { color: #000; }
         .btn-gold span { font-weight: 800; font-size: 18px; }
@@ -115,7 +114,7 @@
             color: var(--gold); font-size: 11px; letter-spacing: 2px; font-weight: 800;
             margin-top: 30px; margin-bottom: 10px; width: 100%; text-align: center;
             opacity: 0.7; text-transform: uppercase; 
-            display: none; /* Varsayılan gizli */
+            display: none;
             align-items: center; justify-content: center;
         }
         .section-title::before, .section-title::after {
@@ -134,7 +133,31 @@
             margin-top: 40px; width: 100%;
             display: flex; flex-direction: column; align-items: center; gap: 20px;
         }
-        .qr-frame { padding: 15px; background: #fff; border-radius: 16px; }
+
+        /* ---------------------------------------------------- */
+        /* QR KODU DÜZELTME ALANI (BURASI DEĞİŞTİ)             */
+        /* ---------------------------------------------------- */
+        .qr-frame { 
+            padding: 15px; 
+            background: #fff; 
+            border-radius: 16px; 
+            width: 100%;          /* Genişlik %100 */
+            max-width: 320px;     /* Maksimum genişlik sınırı (çok büyümesin diye) */
+            aspect-ratio: 1 / 1;  /* Kare şeklini koru */
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden;     /* Taşan kısımları gizle */
+        }
+
+        /* QR Kodun içindeki resmin dışarı taşmasını engelleyen kod */
+        #qrcode img, #qrcode canvas {
+            width: 100% !important;
+            height: auto !important;
+            display: block;
+        }
+        /* ---------------------------------------------------- */
+
         .edit-trigger {
             font-size: 14px; color: #666; cursor: pointer; font-weight: 600;
             display: none; align-items: center; gap: 6px;
@@ -142,7 +165,6 @@
         }
         .branding { font-size: 11px; color: #444; letter-spacing: 3px; text-transform: uppercase; margin-top: 10px; font-weight: 700; }
 
-        /* ADMIN PANELİ */
         #setupPanel {
             position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100;
             padding: 40px 24px; display: none;
@@ -415,9 +437,6 @@
                 document.getElementById('vInitials').style.display = 'flex';
             }
 
-            // --- TEK TEK KONTROL EDEREK GÖSTERME/GİZLEME ---
-            
-            // Telefon & WhatsApp
             showBtn('btnCall', cardData.phone, `tel:${normalizeTel(cardData.phone)}`);
             if(cardData.phone) document.getElementById('lblCall').innerText = cardData.phone;
             
@@ -430,14 +449,12 @@
             showBtn('btnWeb', cardData.web, ensureHttp(cardData.web));
             showBtn('btnMap', cardData.map, ensureHttp(cardData.map));
 
-            // Kurumsal Bölümü
             const hasCompanyData = cardData.compName || cardData.catalog || cardData.review || cardData.pay || cardData.book;
             
             if(hasCompanyData) {
                 document.getElementById('companySection').style.display = 'flex';
                 document.getElementById('secTitleCorp').style.display = 'flex';
                 
-                // Kurumsal butonları tek tek kontrol et
                 const btnTax = document.getElementById('btnTax');
                 if(cardData.compName && cardData.compName.length > 1) {
                     btnTax.style.display = 'flex';
@@ -453,7 +470,6 @@
                 document.getElementById('companySection').style.display = 'none';
             }
 
-            // IBAN Gösterimi
             if(cardData.iban && cardData.iban.length > 5) {
                 document.getElementById('footerSection').style.display = 'flex';
                 document.getElementById('secTitleOther').style.display = 'flex';
@@ -466,18 +482,17 @@
                     document.getElementById('btnIbanNameCopy').style.display = 'none';
                 }
             } else {
-                // IBAN yoksa, sadece paylaş butonu için section açık kalsın mı?
-                // Genelde "Diğer" başlığı altında sadece paylaş kalması garip olabilir ama kalsın.
                 document.getElementById('footerSection').style.display = 'flex';
                 document.getElementById('secTitleOther').style.display = 'flex';
                 document.getElementById('btnIbanCopy').style.display = 'none';
                 document.getElementById('btnIbanNameCopy').style.display = 'none';
             }
 
+            // QR Kodu Oluşturma (1024px ile Yüksek Çözünürlük)
             document.getElementById("qrcode").innerHTML = "";
             new QRCode(document.getElementById("qrcode"), {
                 text: window.location.href,
-                width: 1024, height: 1024,
+                width: 1024, height: 1024, // Yüksek Çözünürlük
                 colorDark : "#000000", colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.M
             });
@@ -492,25 +507,25 @@
             btn.disabled = true;
 
             const folderStr = [
-                encodeSafe(val('inWeb')),      // 0
-                encodeSafe(val('inEmail')),    // 1
-                encodeSafe(val('inIban')),     // 2
-                encodeSafe(val('inTitle')),    // 3
-                encodeSafe(val('inPhone')),    // 4
-                encodeSafe(val('inWhats')),    // 5
-                encodeSafe(val('inInsta')),    // 6
-                encodeSafe(val('inLinkedin')), // 7
-                encodeSafe(val('inMap')),      // 8
-                encodeSafe(val('inImg')),      // 9
-                encodeSafe(val('inFacebook')), // 10
-                encodeSafe(val('inIbanName')), // 11
-                encodeSafe(val('inCompName')), // 12
-                encodeSafe(val('inTaxOffice')),// 13
-                encodeSafe(val('inTaxNo')),    // 14
-                encodeSafe(val('inCatalog')),  // 15
-                encodeSafe(val('inReview')),   // 16
-                encodeSafe(val('inPay')),      // 17
-                encodeSafe(val('inBook'))      // 18
+                encodeSafe(val('inWeb')),
+                encodeSafe(val('inEmail')),
+                encodeSafe(val('inIban')),
+                encodeSafe(val('inTitle')),
+                encodeSafe(val('inPhone')),
+                encodeSafe(val('inWhats')),
+                encodeSafe(val('inInsta')),
+                encodeSafe(val('inLinkedin')),
+                encodeSafe(val('inMap')),
+                encodeSafe(val('inImg')),
+                encodeSafe(val('inFacebook')),
+                encodeSafe(val('inIbanName')),
+                encodeSafe(val('inCompName')),
+                encodeSafe(val('inTaxOffice')),
+                encodeSafe(val('inTaxNo')),
+                encodeSafe(val('inCatalog')),
+                encodeSafe(val('inReview')),
+                encodeSafe(val('inPay')),
+                encodeSafe(val('inBook'))
             ].join("|||");
 
             const newData = {
@@ -667,7 +682,7 @@
         function decodeSafe(s) { try { return decodeURIComponent(s); } catch(e){ return s; } }
         function normalizeTel(t) { return (t||"").replace(/[^\d]/g,'').replace(/^0/,'90'); }
         function ensureHttp(url) { if (!url) return ""; if (!/^https?:\/\//i.test(url)) return 'https://' + url; return url; }
-        // Düzeltilmiş showBtn Fonksiyonu: Boşsa GİZLE
+        
         function showBtn(id, val, href) { 
             const el = document.getElementById(id); 
             if (val && val.trim().length > 1) { 
