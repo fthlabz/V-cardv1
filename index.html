@@ -174,7 +174,26 @@
         .fb-yes { background: var(--gold); color: #000; box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
         .fb-no { background: #222; color: #fff; border: 1px solid #333; }
         
-        .fb-skip { margin-top: 20px; color: #555; font-size: 14px; text-decoration: underline; cursor: pointer; }
+        /* GÜNCELLENEN KARTVİZİTİ GÖRÜNTÜLE BUTONU */
+        .fb-skip-btn {
+            background: rgba(255,255,255,0.1); color: #ccc; 
+            font-size: 16px; height: 50px; margin-top: 10px;
+        }
+
+        /* ------------------------------------------- */
+        /* İSTATİSTİK ALANI (SADECE ADMİNE GÖRÜNÜR)    */
+        /* ------------------------------------------- */
+        #statsPanel {
+            display: none; width: 100%; max-width: 320px;
+            background: #111; border: 1px solid #222; border-radius: 12px;
+            padding: 15px; margin-top: 15px;
+            flex-direction: row; justify-content: space-between; align-items: center;
+        }
+        .stat-box { text-align: center; flex: 1; }
+        .stat-num { font-size: 22px; font-weight: 800; color: #fff; }
+        .stat-label { font-size: 10px; color: #666; text-transform: uppercase; margin-top: 4px; font-weight: 700; }
+        .stat-divider { width: 1px; height: 30px; background: #333; }
+        .stat-month { font-size: 10px; color: var(--gold); margin-bottom: 10px; text-align: center; width: 100%; letter-spacing: 1px; }
 
         /* ------------------------------------------- */
 
@@ -226,15 +245,17 @@
             <div class="fb-title">Memnun Kaldınız mı?</div>
             <div class="fb-desc">Hizmet kalitemizi artırmak için deneyiminizi bizimle paylaşın.</div>
             
-            <button class="fb-btn fb-yes" onclick="handleFeedback(true)">
+            <button class="fb-btn fb-yes" onclick="handleFeedback(true, this)">
                 <i class="fas fa-thumbs-up"></i> Evet, Harikaydı!
             </button>
             
-            <button class="fb-btn fb-no" onclick="handleFeedback(false)">
+            <button class="fb-btn fb-no" onclick="handleFeedback(false, this)">
                 <i class="fas fa-thumbs-down"></i> Hayır, Sorun Var
             </button>
             
-            <div class="fb-skip" onclick="closeFeedback()">Kartviziti Görüntüle</div>
+            <button class="fb-btn fb-skip-btn" onclick="closeFeedback()">
+                <i class="fas fa-id-card"></i> Kartviziti Görüntüle
+            </button>
         </div>
     </div>
     <div class="wrapper" id="cardView" style="display:none;">
@@ -304,6 +325,24 @@
 
         <div class="bottom-area">
             <div class="qr-frame"><div id="qrcode"></div></div>
+            
+            <div id="statsPanel">
+                <div style="width:100%; display:flex; flex-direction:column;">
+                    <div id="statMonthName" class="stat-month">ŞUBAT AYI ANALİZİ</div>
+                    <div style="display:flex; width:100%; justify-content:space-between; align-items:center;">
+                        <div class="stat-box">
+                            <div class="stat-num" style="color:#4CAF50;" id="countYes">0</div>
+                            <div class="stat-label">Google</div>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat-box">
+                            <div class="stat-num" style="color:#F44336;" id="countNo">0</div>
+                            <div class="stat-label">Şikayet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div id="adminEdit" class="edit-trigger" onclick="openSetup()">
                 <i class="fas fa-pen"></i> 
             </div>
@@ -332,7 +371,6 @@
             
             <div class="input-group"><span class="label">Katalog / Menü Linki</span><input type="text" id="inCatalog" class="input"></div>
             <div class="input-group"><span class="label">Google Yorum Linki</span><input type="text" id="inReview" class="input" placeholder="Google Maps linki"></div>
-            
             <div class="input-group"><span class="label">Şikayet / Form Linki</span><input type="text" id="inComplaint" class="input" placeholder="Boş bırakılırsa WhatsApp açılır"></div>
             
             <div class="input-group"><span class="label">Ödeme Linki</span><input type="text" id="inPay" class="input"></div>
@@ -381,6 +419,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         let currentID = urlParams.get('id');
         let cardData = {};
+        let userStats = { yes: 0, no: 0, month: "" }; // İstatistik Objesi
 
         window.onload = function() {
             if (!currentID) {
@@ -410,7 +449,16 @@
                     let rawFolder = (userData.folder || "").replace(/¬=/g, "").replace(/¬/g, "");
                     const parts = rawFolder.split("|||");
                     
-                    // VERİ OKUMA: YENİ EKLENEN 'complaint' 19. İNDEKSTE (20. ELEMAN)
+                    // İSTATİSTİKLERİ ÇEK (Eğer varsa)
+                    if(userData.stats) {
+                        userStats = userData.stats;
+                    } else {
+                        // Eski verilerde stat yoksa, şimdiki ayı tanımla
+                        const now = new Date();
+                        const currentMonth = `${now.getFullYear()}-${now.getMonth()+1}`;
+                        userStats = { yes: 0, no: 0, month: currentMonth };
+                    }
+
                     cardData = {
                         name: cleanTitle,
                         web: decodeSafe(parts[0]),
@@ -432,11 +480,13 @@
                         review: decodeSafe(parts[16]),
                         pay: decodeSafe(parts[17]),
                         book: decodeSafe(parts[18]),
-                        complaint: decodeSafe(parts[19]) // YENİ ALAN
+                        complaint: decodeSafe(parts[19])
                     };
                     
-                    // ÖNCE FEEDBACK KONTROLÜ
-                    if(cardData.review && cardData.review.length > 5) {
+                    // FEEDBACK KONTROLÜ (Admin değilse göster)
+                    const isAdmin = localStorage.getItem('admin_' + currentID) === "1";
+                    
+                    if(cardData.review && cardData.review.length > 5 && !isAdmin) {
                         document.getElementById('feedbackModal').style.display = 'flex';
                     } else {
                         document.getElementById('cardView').style.display = 'flex';
@@ -444,8 +494,9 @@
                     
                     renderView();
                     
-                    if (localStorage.getItem('admin_' + currentID) === "1") {
+                    if (isAdmin) {
                         document.getElementById('adminEdit').style.display = 'flex';
+                        showStatsPanel(); // Admin ise istatistikleri göster
                     }
                 }
 
@@ -458,24 +509,98 @@
             }
         }
 
-        // FEEDBACK FONKSİYONLARI
-        function handleFeedback(isPositive) {
+        function showStatsPanel() {
+            document.getElementById('statsPanel').style.display = 'flex';
+            document.getElementById('countYes').innerText = userStats.yes || 0;
+            document.getElementById('countNo').innerText = userStats.no || 0;
+            
+            // Ay ismini yazdır
+            if(userStats.month) {
+                const months = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+                const mIndex = parseInt(userStats.month.split('-')[1]);
+                document.getElementById('statMonthName').innerText = months[mIndex] + " AYI ANALİZİ";
+            }
+        }
+
+        // --- İSTATİSTİK GÜNCELLEME VE YÖNLENDİRME ---
+        async function handleFeedback(isPositive, btnElement) {
+            // Butona basıldığını hissettir
+            const originalText = btnElement.innerHTML;
+            btnElement.innerHTML = `<div class="spinner" style="width:20px; height:20px; border-width:2px; margin:0;"></div> Yönlendiriliyor...`;
+            btnElement.style.pointerEvents = "none";
+
+            // Arkaplanda GitHub'ı güncelle
+            try {
+                await updateStatsOnGithub(isPositive);
+            } catch(e) {
+                console.log("Stat update failed but proceeding", e);
+            }
+
+            // Yönlendirme İşlemi
             if(isPositive) {
-                // EVET: Google Yorum Linkine Git
                 window.location.href = ensureHttp(cardData.review);
             } else {
-                // HAYIR: Şikayet Linkine Git veya WhatsApp Aç
                 if(cardData.complaint && cardData.complaint.length > 3) {
                     window.location.href = ensureHttp(cardData.complaint);
                 } else if(cardData.whats) {
                     const msg = "Merhaba, hizmetinizle ilgili geri bildirimde bulunmak istiyorum.";
                     window.location.href = `https://wa.me/${normalizeTel(cardData.whats)}?text=${encodeURIComponent(msg)}`;
                 } else {
-                    alert("Geri bildirim formu tanımlanmamış. Lütfen telefon ile iletişime geçin.");
+                    alert("Geri bildirim formu tanımlanmamış.");
                     closeFeedback();
                 }
             }
         }
+
+        async function updateStatsOnGithub(isPositive) {
+            const apiUrl = `https://api.github.com/repos/${GITHUB_USERNAME}/${GITHUB_REPO}/contents/${GITHUB_FILENAME}`;
+            
+            // Mevcut zamanı kontrol et (Ay değişmiş mi?)
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${now.getMonth()+1}`;
+            
+            // Veriyi Çek
+            const getRes = await fetch(apiUrl, {
+                headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            
+            if (!getRes.ok) return;
+            const fileData = await getRes.json();
+            const content = JSON.parse(decodeURIComponent(escape(window.atob(fileData.content))));
+            
+            // Kullanıcı verisini al veya oluştur
+            let userData = content[currentID] || {};
+            let stats = userData.stats || { yes: 0, no: 0, month: currentMonth };
+
+            // AY KONTROLÜ: Eğer kayıtlı ay şimdiki aydan farklıysa SIFIRLA
+            if(stats.month !== currentMonth) {
+                stats = { yes: 0, no: 0, month: currentMonth };
+            }
+
+            // Sayacı Artır
+            if(isPositive) stats.yes++;
+            else stats.no++;
+
+            // Güncelle
+            userData.stats = stats;
+            content[currentID] = userData;
+
+            // GitHub'a Geri Yaz
+            const contentEncoded = window.btoa(unescape(encodeURIComponent(JSON.stringify(content, null, 2))));
+            await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `Stats update for ${currentID}`,
+                    content: contentEncoded,
+                    sha: fileData.sha
+                })
+            });
+        }
+        // ----------------------------------------------
 
         function closeFeedback() {
             document.getElementById('feedbackModal').style.display = 'none';
@@ -590,12 +715,14 @@
                 encodeSafe(val('inReview')),
                 encodeSafe(val('inPay')),
                 encodeSafe(val('inBook')),
-                encodeSafe(val('inComplaint')) // YENİ KAYIT ALANI
+                encodeSafe(val('inComplaint'))
             ].join("|||");
 
+            // Kaydederken mevcut istatistikleri koru
             const newData = {
                 title: name,
                 folder: folderStr,
+                stats: userStats, // İstatistikleri kaybetme
                 updatedAt: new Date().toISOString()
             };
 
@@ -603,10 +730,7 @@
 
             try {
                 const getRes = await fetch(apiUrl, {
-                    headers: { 
-                        'Authorization': `token ${GITHUB_TOKEN}`,
-                        'Accept': 'application/vnd.github.v3+json'
-                    }
+                    headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
                 });
                 
                 let currentContent = {};
@@ -679,7 +803,7 @@
             valSet('inReview', cardData.review);
             valSet('inPay', cardData.pay);
             valSet('inBook', cardData.book);
-            valSet('inComplaint', cardData.complaint); // YENİ
+            valSet('inComplaint', cardData.complaint);
         }
 
         function copyTaxInfo() {
