@@ -134,29 +134,12 @@
             display: flex; flex-direction: column; align-items: center; gap: 20px;
         }
 
-        /* ---------------------------------------------------- */
-        /* QR KODU DÜZELTME ALANI (BURASI DEĞİŞTİ)             */
-        /* ---------------------------------------------------- */
         .qr-frame { 
-            padding: 15px; 
-            background: #fff; 
-            border-radius: 16px; 
-            width: 100%;          /* Genişlik %100 */
-            max-width: 320px;     /* Maksimum genişlik sınırı (çok büyümesin diye) */
-            aspect-ratio: 1 / 1;  /* Kare şeklini koru */
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            overflow: hidden;     /* Taşan kısımları gizle */
+            padding: 15px; background: #fff; border-radius: 16px; 
+            width: 100%; max-width: 320px; aspect-ratio: 1 / 1;
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
         }
-
-        /* QR Kodun içindeki resmin dışarı taşmasını engelleyen kod */
-        #qrcode img, #qrcode canvas {
-            width: 100% !important;
-            height: auto !important;
-            display: block;
-        }
-        /* ---------------------------------------------------- */
+        #qrcode img, #qrcode canvas { width: 100% !important; height: auto !important; display: block; }
 
         .edit-trigger {
             font-size: 14px; color: #666; cursor: pointer; font-weight: 600;
@@ -164,6 +147,36 @@
             padding: 10px 20px; border-radius: 20px; background: #111;
         }
         .branding { font-size: 11px; color: #444; letter-spacing: 3px; text-transform: uppercase; margin-top: 10px; font-weight: 700; }
+
+        /* ------------------------------------------- */
+        /* YENİ GERİ BİLDİRİM EKRANI STİLLERİ          */
+        /* ------------------------------------------- */
+        #feedbackModal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 5000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; text-align: center; animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+        
+        .fb-content { width: 100%; max-width: 350px; }
+        .fb-icon { font-size: 60px; color: var(--gold); margin-bottom: 25px; }
+        .fb-title { font-size: 26px; font-weight: 800; margin-bottom: 10px; color: #fff; }
+        .fb-desc { font-size: 15px; color: #aaa; margin-bottom: 40px; line-height: 1.5; }
+        
+        .fb-btn {
+            width: 100%; height: 70px; border-radius: 18px; margin-bottom: 15px;
+            display: flex; align-items: center; justify-content: center; gap: 15px;
+            font-size: 20px; font-weight: 700; cursor: pointer; border: none;
+            transition: transform 0.1s;
+        }
+        .fb-btn:active { transform: scale(0.95); }
+        
+        .fb-yes { background: var(--gold); color: #000; box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
+        .fb-no { background: #222; color: #fff; border: 1px solid #333; }
+        
+        .fb-skip { margin-top: 20px; color: #555; font-size: 14px; text-decoration: underline; cursor: pointer; }
+
+        /* ------------------------------------------- */
 
         #setupPanel {
             position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100;
@@ -207,6 +220,23 @@
     <div id="loader"><div class="spinner"></div></div>
     <div id="toast"><i class="fas fa-check-circle"></i> Kopyalandı!</div>
 
+    <div id="feedbackModal">
+        <div class="fb-content">
+            <i class="fas fa-star-half-alt fb-icon"></i>
+            <div class="fb-title">Memnun Kaldınız mı?</div>
+            <div class="fb-desc">Hizmet kalitemizi artırmak için deneyiminizi bizimle paylaşın.</div>
+            
+            <button class="fb-btn fb-yes" onclick="handleFeedback(true)">
+                <i class="fas fa-thumbs-up"></i> Evet, Harikaydı!
+            </button>
+            
+            <button class="fb-btn fb-no" onclick="handleFeedback(false)">
+                <i class="fas fa-thumbs-down"></i> Hayır, Sorun Var
+            </button>
+            
+            <div class="fb-skip" onclick="closeFeedback()">Kartviziti Görüntüle</div>
+        </div>
+    </div>
     <div class="wrapper" id="cardView" style="display:none;">
         <div class="profile-area">
             <div class="avatar-box">
@@ -301,7 +331,10 @@
             <div class="input-group"><span class="label">Vergi Numarası</span><input type="text" id="inTaxNo" class="input"></div>
             
             <div class="input-group"><span class="label">Katalog / Menü Linki</span><input type="text" id="inCatalog" class="input"></div>
-            <div class="input-group"><span class="label">Google Yorum Linki</span><input type="text" id="inReview" class="input"></div>
+            <div class="input-group"><span class="label">Google Yorum Linki</span><input type="text" id="inReview" class="input" placeholder="Google Maps linki"></div>
+            
+            <div class="input-group"><span class="label">Şikayet / Form Linki</span><input type="text" id="inComplaint" class="input" placeholder="Boş bırakılırsa WhatsApp açılır"></div>
+            
             <div class="input-group"><span class="label">Ödeme Linki</span><input type="text" id="inPay" class="input"></div>
             <div class="input-group"><span class="label">Randevu Linki</span><input type="text" id="inBook" class="input"></div>
 
@@ -341,7 +374,7 @@
         const GITHUB_FILENAME = "data.json";
 
         const TOKEN_BASI   = "ghp_";
-        const TOKEN_DEVAMI = "VKnhQ1DRON25B6xSSu7faZ68cFvjg32Y4Fu3"; // Sadece tokenin ghp_ sonrası kısmı
+        const TOKEN_DEVAMI = "VKnhQ1DRON25B6xSSu7faZ68cFvjg32Y4Fu3"; 
         const GITHUB_TOKEN = TOKEN_BASI + TOKEN_DEVAMI;
         // ================================================================
 
@@ -373,12 +406,11 @@
                 if (!userData) {
                     openSetup();
                 } else {
-                    document.getElementById('cardView').style.display = 'flex';
-                    
                     let cleanTitle = (userData.title || "").replace(/¬=/g, "").replace(/¬/g, "").trim();
                     let rawFolder = (userData.folder || "").replace(/¬=/g, "").replace(/¬/g, "");
                     const parts = rawFolder.split("|||");
                     
+                    // VERİ OKUMA: YENİ EKLENEN 'complaint' 19. İNDEKSTE (20. ELEMAN)
                     cardData = {
                         name: cleanTitle,
                         web: decodeSafe(parts[0]),
@@ -399,8 +431,17 @@
                         catalog: decodeSafe(parts[15]),
                         review: decodeSafe(parts[16]),
                         pay: decodeSafe(parts[17]),
-                        book: decodeSafe(parts[18])
+                        book: decodeSafe(parts[18]),
+                        complaint: decodeSafe(parts[19]) // YENİ ALAN
                     };
+                    
+                    // ÖNCE FEEDBACK KONTROLÜ
+                    if(cardData.review && cardData.review.length > 5) {
+                        document.getElementById('feedbackModal').style.display = 'flex';
+                    } else {
+                        document.getElementById('cardView').style.display = 'flex';
+                    }
+                    
                     renderView();
                     
                     if (localStorage.getItem('admin_' + currentID) === "1") {
@@ -415,6 +456,30 @@
                     openSetup();
                 }
             }
+        }
+
+        // FEEDBACK FONKSİYONLARI
+        function handleFeedback(isPositive) {
+            if(isPositive) {
+                // EVET: Google Yorum Linkine Git
+                window.location.href = ensureHttp(cardData.review);
+            } else {
+                // HAYIR: Şikayet Linkine Git veya WhatsApp Aç
+                if(cardData.complaint && cardData.complaint.length > 3) {
+                    window.location.href = ensureHttp(cardData.complaint);
+                } else if(cardData.whats) {
+                    const msg = "Merhaba, hizmetinizle ilgili geri bildirimde bulunmak istiyorum.";
+                    window.location.href = `https://wa.me/${normalizeTel(cardData.whats)}?text=${encodeURIComponent(msg)}`;
+                } else {
+                    alert("Geri bildirim formu tanımlanmamış. Lütfen telefon ile iletişime geçin.");
+                    closeFeedback();
+                }
+            }
+        }
+
+        function closeFeedback() {
+            document.getElementById('feedbackModal').style.display = 'none';
+            document.getElementById('cardView').style.display = 'flex';
         }
 
         function renderView() {
@@ -488,11 +553,10 @@
                 document.getElementById('btnIbanNameCopy').style.display = 'none';
             }
 
-            // QR Kodu Oluşturma (1024px ile Yüksek Çözünürlük)
             document.getElementById("qrcode").innerHTML = "";
             new QRCode(document.getElementById("qrcode"), {
                 text: window.location.href,
-                width: 1024, height: 1024, // Yüksek Çözünürlük
+                width: 1024, height: 1024,
                 colorDark : "#000000", colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.M
             });
@@ -525,7 +589,8 @@
                 encodeSafe(val('inCatalog')),
                 encodeSafe(val('inReview')),
                 encodeSafe(val('inPay')),
-                encodeSafe(val('inBook'))
+                encodeSafe(val('inBook')),
+                encodeSafe(val('inComplaint')) // YENİ KAYIT ALANI
             ].join("|||");
 
             const newData = {
@@ -614,6 +679,7 @@
             valSet('inReview', cardData.review);
             valSet('inPay', cardData.pay);
             valSet('inBook', cardData.book);
+            valSet('inComplaint', cardData.complaint); // YENİ
         }
 
         function copyTaxInfo() {
@@ -679,7 +745,7 @@
         function val(id) { return document.getElementById(id).value; }
         function valSet(id, v) { document.getElementById(id).value = v || ""; }
         function encodeSafe(s) { return encodeURIComponent((s || "").trim()); }
-        function decodeSafe(s) { try { return decodeURIComponent(s); } catch(e){ return s; } }
+        function decodeSafe(s) { try { if(!s) return ""; return decodeURIComponent(s); } catch(e){ return s; } }
         function normalizeTel(t) { return (t||"").replace(/[^\d]/g,'').replace(/^0/,'90'); }
         function ensureHttp(url) { if (!url) return ""; if (!/^https?:\/\//i.test(url)) return 'https://' + url; return url; }
         
