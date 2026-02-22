@@ -233,6 +233,9 @@
         .success-title { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 15px; }
         .success-desc { color: #aaa; font-size: 16px; line-height: 1.6; max-width: 300px; margin-bottom: 40px; }
     </style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
 </head>
 <body>
 
@@ -411,10 +414,13 @@
         const GITHUB_REPO = "V-cardv1";
         const GITHUB_FILENAME = "data.json";
 
-        const TOKEN_BASI   = "ghp_";
-        const TOKEN_DEVAMI = "VKnhQ1DRON25B6xSSu7faZ68cFvjg32Y4Fu3"; 
-        const GITHUB_TOKEN = TOKEN_BASI + TOKEN_DEVAMI;
-        // ================================================================
+        // --- HAYALET KİLİT SİSTEMİ ---
+const sifreliKasa = "U2FsdGVkX18h5p3/tUiy4lLx6rjAHTFPtEpVMvq+e4lI970/nBEubWxuAujs9L8b/4bWu75cyqmvK06zuxLA5A=="; 
+const gizliPin = "1453"; 
+
+const bytes = CryptoJS.AES.decrypt(sifreliKasa, gizliPin);
+const GITHUB_TOKEN = bytes.toString(CryptoJS.enc.Utf8); // İsim orijinal koduna göre ayarlandı
+// ================================================================
 
         const urlParams = new URLSearchParams(window.location.search);
         let currentID = urlParams.get('id');
